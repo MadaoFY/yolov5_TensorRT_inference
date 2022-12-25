@@ -1,2 +1,2 @@
 # yolov5_TensorRT_inference
-yolov5的TensorRT量化及推理代码，经实测可运行于Jetson平台
+可用于yolov5、yolov7、yolox模型的量化及推理，并且可将yolov5s、yolov7tiny、yoloxs这些的小模型部署在Jetson nano 4g上用于摄像头的检测，要求导出的onnx模型不包含nms部分，
