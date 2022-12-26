@@ -12,7 +12,7 @@
 
 yolov5s.onnx：https://pan.baidu.com/s/1wKgRgdjk12YxDNqcYuvu9w 提取码: upaj
 
-voc2012：https://pan.baidu.com/s/1eWMQEnHwgbhjk93Qlhrg3Q 提取码: mrky
+voc2012：https://pan.baidu.com/s/1ZrT_s-cFqt6sQlHDIZUr4w 提取码: nk6s
 
 视频源：https://pan.baidu.com/s/1WHPwu9nmtEmJwZuukTGitQ 提取码: 4ja6
 
