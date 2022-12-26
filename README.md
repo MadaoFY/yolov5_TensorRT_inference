@@ -20,7 +20,7 @@ voc2012：https://pan.baidu.com/s/1ZrT_s-cFqt6sQlHDIZUr4w
 视频源：https://pan.baidu.com/s/1WHPwu9nmtEmJwZuukTGitQ  
 提取码: 4ja6
 
-### 量化(onnx2trt.py)
+### 量化(```onnx2trt.py```)
 你需要从yolov5、yolov7、yolox的官方库导出相应onnx模型，从第三方实现的库中导出的yolo onnx模型不保证适用，注意导出的onnx不包含nms部分。默认将onnx模型放置于models_onnx文件夹，导出的trt模型可保存于models_trt文件夹。如果你想使用int8量化，你需要从训练集中准备至少500张图片作为校准集，图片放置于calibration文件夹。```--onnx_dir```onnx模型路径，```--engine_dir```trt模型的保存路径，```--int8```是否使用int8量化，```--imgs_dir```校准集路径。
 ```bash
 python onnx2trt.py  --onnx_dir ./models_onnx/yolov5s.onnx --engine_dir ./models_trt/yolov5s.engine --int8 True --imgs_dir ./calibration
@@ -28,7 +28,7 @@ python onnx2trt.py  --onnx_dir ./models_onnx/yolov5s.onnx --engine_dir ./models_
 更多参数可以在脚本中查看。
 
 
-### 视频推理(video_detect_yolov5.py)
+### 视频推理(```video_detect_yolov5.py```)
 你需要准备一个模型输出类别的labels文件，具体可参考仓库的labels_coco.yaml文件。本演示中用到模型为coco训练的yolov5s模型，所以需要用到相对应的coco类别。如果你使用的是yolov5、yolov7模型，运行video_detect_yolov5.py脚本，yolox模型运行video_detect_yolox.py脚本。以yolov5s.engine推理为例。```--video_dir```视频源路径，```--engine_dir```trt模型路径，```--labels```模型labels文件。
 ```bash
 python video_detect_yolov5.py  --video_dir ./sample_1080p_h265.mp4 --engine_dir ./models_trt/yolov5s.engine --labels ./labels_coco.yaml
