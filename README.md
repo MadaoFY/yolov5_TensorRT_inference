@@ -1,6 +1,6 @@
 # yolov5_TensorRT_inference
 记录yolov5的TensorRT量化及推理代码，经实测可运行于Jetson平台。可实现yolov5、yolov7、yolox模型的量化(fp32, fp16, int8)及推理，并且可将yolov5s、yolov7tiny、yoloxs这些的小模型部署在Jetson nano 4g上用于摄像头的检测。  
-![image](https://github.com/MadaoFY/yolov5_TensorRT_inference/blob/main/doc/yolov5s_det.png)  
+![image](https://github.com/MadaoFY/yolov5_TensorRT_inference/raw/main/doc/yolov5s_det.png)  
 
 本人使用的TensrRT版本为8.4.3.1，为保证成功运行，你的TensorRT大版本最好在8.4。
 
