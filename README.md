@@ -9,7 +9,7 @@
 ## 使用演示
 
 ### 模型准备
-使用yolov5官方提供的coco训练模型，已导出为onnx。这里使用voc2012作为验证集，仅用来演示，你可以下载coco数据集作为你的验证集。
+使用yolov5官方提供的coco训练模型，已导出为onnx。这里使用voc2012作为校准集，仅用来演示，你可以下载coco数据集作为你的校准集。
 
 yolov5s.onnx：https://pan.baidu.com/s/1wKgRgdjk12YxDNqcYuvu9w  
 提取码: upaj
