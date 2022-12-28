@@ -14,8 +14,8 @@
 yolov5s.onnx：https://pan.baidu.com/s/1wKgRgdjk12YxDNqcYuvu9w  
 提取码: upaj
 
-voc2012：https://pan.baidu.com/s/1ZrT_s-cFqt6sQlHDIZUr4w  
-提取码: nk6s
+voc2012：链接: https://pan.baidu.com/s/17QaTm_xeAxKE0z9AQYS7Ug  
+提取码: 7zyh
 
 视频源：https://pan.baidu.com/s/1WHPwu9nmtEmJwZuukTGitQ  
 提取码: 4ja6
