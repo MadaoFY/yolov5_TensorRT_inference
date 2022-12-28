@@ -13,7 +13,7 @@
 
 yolov5s.onnx：https://pan.baidu.com/s/1wKgRgdjk12YxDNqcYuvu9w  
 
-voc2012：链接: https://pan.baidu.com/s/17QaTm_xeAxKE0z9AQYS7Ug  
+voc2012：https://pan.baidu.com/s/17QaTm_xeAxKE0z9AQYS7Ug  
 
 视频源：https://pan.baidu.com/s/1WHPwu9nmtEmJwZuukTGitQ  
 
