@@ -11,11 +11,14 @@
 ### 模型准备
 使用yolov5官方提供的coco训练模型，已导出为onnx。这里使用voc2012作为校准集，仅用来演示，你可以下载coco数据集作为你的校准集。
 
-yolov5s.onnx：https://pan.baidu.com/s/1wKgRgdjk12YxDNqcYuvu9w  
+yolov5s.onnx：https://pan.baidu.com/s/1eYaU3ndVpwexL4k6goxjHg  
+提取码: sduf   
 
-voc2012：https://pan.baidu.com/s/17QaTm_xeAxKE0z9AQYS7Ug  
+voc2012：https://pan.baidu.com/s/1rICWiczIv_GyrYIrEj1p3Q  
+提取码: 4pgx
 
-视频源：https://pan.baidu.com/s/1WHPwu9nmtEmJwZuukTGitQ  
+视频源：https://pan.baidu.com/s/1HBIjz6019vn9qfoKPIuV2A  
+提取码: fbfh
 
 ### 量化(```onnx2trt.py```)
 你需要从yolov5、yolov7、yolox的官方库导出相应onnx模型，从第三方实现的库中导出的yolo onnx模型不保证适用，注意导出的onnx不包含nms部分。默认将onnx模型放置于models_onnx文件夹，导出的trt模型可保存于models_trt文件夹。如果你想使用int8量化，你需要从训练集中准备至少500张图片作为校准集，图片放置于calibration文件夹。```--onnx_dir```onnx模型路径，```--engine_dir```trt模型的保存路径，```--int8```是否使用int8量化，```--imgs_dir```校准集路径。
