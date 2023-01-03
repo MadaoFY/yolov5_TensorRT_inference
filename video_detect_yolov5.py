@@ -5,9 +5,9 @@ import cv2 as cv
 import numpy as np
 import tensorrt as trt
 
-import trt_infer
-
-from utils_detection import yaml_load, letterbox_image, scale_bboxes, non_max_suppression, Colors, draw_boxes
+from utils import trt_infer
+from utils.utils_detection import yaml_load, letterbox_image, scale_bboxes, non_max_suppression, \
+    Colors, draw_boxes
 
 
 def load_engine(engine_path):
@@ -59,14 +59,6 @@ class yolov5_engine_det():
         for i in pred:
             # pred: x1, y1, x2, y2, conf, labels
             frame = draw_boxes(frame, i[:4], i[4], i[5], self.labels, 1, self.colors)
-            # bbox = tuple(i[:4].astype('int'))
-            # frame = cv.rectangle(frame, bbox[:2], bbox[2:], thickness=2, lineType=cv.LINE_AA,
-            #                      color=self.colors[i[-1]]
-            #                      )
-            # frame = cv.putText(frame, f'{self.labels[i[-1]]}:{i[-2]:.2f}', (bbox[0] + 5, bbox[1] + 30),
-            #                    fontFace=cv.FONT_HERSHEY_DUPLEX, fontScale=1, thickness=1, lineType=cv.LINE_AA,
-            #                    color = (210, 105, 30)
-            #                    )
         frame = cv.putText(frame, f'fps: {fps}', (10, 30), fontFace=cv.FONT_HERSHEY_SIMPLEX, fontScale=1, thickness=2,
                            lineType=cv.LINE_AA, color=(255, 0, 255))
         return frame, times

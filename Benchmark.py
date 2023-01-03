@@ -8,8 +8,8 @@ import numpy as np
 import tensorrt as trt
 import timm.data.transforms_factory
 
-import trt_infer
 from tqdm import tqdm
+from utils import trt_infer
 
 # int8 / fp32 ~ 70%
 # trt > ppq > fp32
