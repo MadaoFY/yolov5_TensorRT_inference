@@ -6,7 +6,7 @@ torch>=1.10.2+cu113
 torchvision>=0.11.3
 
 
-pycuda<2021.1   # old CUDA python API (not recommended), replaced bgy cuda-python
+pycuda<2021.1   # old CUDA python API (not recommended), replaced by cuda-python
 nvidia-pyindex
 tensorrt == 8.4.3.1   # https://docs.nvidia.com/deeplearning/tensorrt/install-guide/index.html#downloading
 cuda-python
