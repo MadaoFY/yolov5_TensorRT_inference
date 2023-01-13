@@ -5,25 +5,26 @@ import cv2 as cv
 import numpy as np
 import tensorrt as trt
 
-from utils import trt_infer
-from utils.utils_detection import yaml_load, letterbox_image, scale_bboxes, non_max_suppression, \
-    Colors, draw_boxes
+import trt_infer
+
+from utils_detection import yaml_load, letterbox_image, scale_bboxes, non_max_suppression, Colors, draw_boxes
 
 
 def load_engine(engine_path):
     # TRT_LOGGER = trt.Logger(trt.Logger.WARNING)  # INFO
     logger = trt.Logger(trt.Logger.ERROR)
+    trt.init_libnvinfer_plugins(logger, '')
     with open(engine_path, 'rb') as f, trt.Runtime(logger) as runtime:
         return runtime.deserialize_cuda_engine(f.read())
 
 
-class yolov5_engine_det():
+class yolov5_engine_det:
     def __init__(self, engine_dir, catid_labels, conf=0.25, iou=0.45, max_det=300):
-        self.engine = self.__load_engine(engine_dir)
+        self.engine=load_engine(engine_dir)
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.context = self.engine.create_execution_context()
         self.resize = self.engine.get_binding_shape(0)[2:]
-        self.colors = self.__get_colors_dict(catid_labels)
+        self.colors = self.get_colors_dict(catid_labels)
         self.labels = catid_labels
         self.conf = conf
         self.iou = iou
@@ -32,12 +33,8 @@ class yolov5_engine_det():
 
         # self.context.set_binding_shape(0, [1, 3, self.resize[0], self.resize[1]])
 
-    def __load_engine(self, engine_dir):
-        logger = trt.Logger(trt.Logger.ERROR)
-        with open(engine_dir, 'rb') as f, trt.Runtime(logger) as runtime:
-            return runtime.deserialize_cuda_engine(f.read())
-
-    def __get_colors_dict(self, catid_labels):
+    @staticmethod
+    def get_colors_dict(catid_labels):
         color_dicts = Colors(catid_labels)
         return color_dicts.get_id_and_colors()
 
@@ -113,7 +110,7 @@ if __name__ == "__main__":
     parser.add_argument('--video_dir', type=str, default='sample_1080p_h265.mp4',
                         help='video path')
     # engine模型地址
-    parser.add_argument('--engine_dir', type=str, default='./models_trt/yolov5s_512.engine',
+    parser.add_argument('--engine_dir', type=str, default='./models_trt/yolov5s.engine',
                         help='engine path')
     # 只有得分大于置信度的预测框会被保留下来
     parser.add_argument('--conf_thres', type=float, default=0.25, help='confidence threshold')
