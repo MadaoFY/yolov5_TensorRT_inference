@@ -5,9 +5,8 @@ import cv2 as cv
 import numpy as np
 import tensorrt as trt
 
-import trt_infer
-
-from utils_detection import yaml_load, letterbox_image, scale_bboxes, non_max_suppression, Colors, draw_boxes
+from utils import trt_infer
+from utils.utils_detection import yaml_load, letterbox_image, scale_bboxes, non_max_suppression, Colors, draw_boxes
 
 
 def load_engine(engine_path):

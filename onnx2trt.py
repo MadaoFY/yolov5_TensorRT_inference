@@ -4,7 +4,7 @@ import numpy as np
 import tensorrt as trt
 
 
-import calibrator
+from utils import calibrator
 
 __all__ = [
     'build_engine',
