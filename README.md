@@ -4,7 +4,7 @@
 <img src="https://github.com/MadaoFY/yolov5_TensorRT_inference/blob/main/doc/yolov5s_det.png">
 </div>
 
-本人使用的TensrRT版本为8.4.3.1，为保证成功运行，你的TensorRT大版本最好在8.4。具体环境依赖请参考```requirements.txt```
+温馨提示：本人使用的TensrRT版本为8.4.3.1，为保证成功运行，你的TensorRT大版本最好在8.4。具体环境依赖请参考```requirements.txt```
 
 以下将使用yolov5s模型演示如何量化及用于视频的推理。
 
