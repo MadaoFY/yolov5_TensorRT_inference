@@ -91,8 +91,11 @@ python video_detect_yolov7.py  --video_dir ./sample_1080p_h265.mp4 --engine_dir 
 TensoRT：https://docs.nvidia.com/deeplearning/tensorrt/install-guide/index.html#installing  
 https://developer.nvidia.com/tensorrt
 
-yolov5：https://github.com/ultralytics/yolov5
+Trt_sample: https://github.com/NVIDIA/trt-samples-for-hackathon-cn/tree/master/cookbook
 
-yolov7：https://github.com/WongKinYiu/yolov7
+yolox：https://github.com/Megvii-BaseDetection/YOLOX  
+yolov5：https://github.com/ultralytics/yolov5  
+yolov7：https://github.com/WongKinYiu/yolov7  
+yolov8: https://github.com/ultralytics/ultralytics
 
-yolox：https://github.com/Megvii-BaseDetection/YOLOX
+
