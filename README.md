@@ -58,6 +58,7 @@ python onnx2trt.py  --onnx_dir ./models_onnx/yolov5s.onnx --engine_dir ./models_
 - ```--conf_thres``` nms的置信度设置
 - ```--iou_thres``` nms的iou设置
 - ```--max_det``` nms输出的最大检测数量
+
 更详细参数说明可以在脚本中查看。
 
 ## 视频推理
