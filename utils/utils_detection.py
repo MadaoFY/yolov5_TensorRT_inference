@@ -177,7 +177,7 @@ def non_max_suppression(prediction,
                         conf_thres=0.25,
                         iou_thres=0.45,
                         agnostic=False,
-                        max_det=300):
+                        max_det=200):
     bs = prediction.shape[0]  # batch size
     xc = prediction[..., 4] > conf_thres  # candidates
     # Settings
@@ -231,6 +231,64 @@ def non_max_suppression(prediction,
 
         output[xi] = x[i]
     return output
+
+
+def non_max_suppression_v2(prediction,
+                        conf_thres=0.25,
+                        iou_thres=0.45,
+                        agnostic=False,
+                        max_det=200):
+    bs = prediction.shape[0]  # batch size
+    xc = prediction[..., 4] > conf_thres  # candidates
+    # Settings
+    # min_wh = 2  # (pixels) minimum box width and height
+    # max_wh = 7680  # (pixels) maximum box width and height
+    max_nms = 30000  # maximum number of boxes into torchvision.ops.nms()
+    # redundant = True  # require redundant detections
+    # merge = False  # use merge-NMS
+    output = [np.zeros((0, 6), dtype=np.float32)] * bs
+    for xi, x in enumerate(prediction):  # image index, image inference
+        # Apply constraints
+        # x[((x[..., 2:4] < min_wh) | (x[..., 2:4] > max_wh)).any(1), 4] = 0  # width-height
+        x = x[xc[xi]]  # confidence
+        # If none remain process next image
+        if not x.shape[0]:
+            continue
+
+        # Compute conf
+        x[:, 5:] *= x[:, 4:5]  # conf = obj_conf * cls_conf
+
+        # Detections matrix nx6 (xywh, conf, cls)
+        j = x[:, 5:].argmax(axis=1, keepdims=True)
+        # conf = x[:, 5:].max(axis=1, keepdims=True)
+        conf = x[:, 5:]
+        conf = conf[range(len(j)), j.ravel()].reshape(-1, 1)
+        x = np.concatenate((x[:,:4], conf, j), 1)[conf.ravel() > conf_thres]
+        # Check shape
+        n = x.shape[0]  # number of boxes
+        if not n:  # no boxes
+            continue
+        elif n > max_nms:  # excess boxes
+            x = x[x[:, 4].argsort()[::-1][:max_nms]]  # sort by confidence
+
+        # Batched NMS
+        # c = x[:, 5:6] * (0 if agnostic else max_wh)  # classes
+        # boxes, scores = x[:, :4] + c, x[:, 4]  # boxes (offset by class), scores
+        # i = cv.dnn.NMSBoxes(boxes, scores, conf_thres, iou_thres)
+        c = x[:, 5].ravel().astype("int32")
+        i = cv.dnn.NMSBoxesBatched(x[:, :4], x[:, 4], c, conf_thres, iou_thres, None, max_det)
+        # x[i] = xywh2xyxy(x[i])
+        # if merge and (1 < n < 3E3):  # Merge NMS (boxes merged using weighted mean)
+        #     # update boxes as boxes(i,4) = weights(i,n) * boxes(n,4)
+        #     iou = box_iou(x[:, :4][i], x[:, :4]) > iou_thres  # iou matrix
+        #     weights = iou * x[:, 4][None]  # box weights
+        #     x[i, :4] = np.matmul(weights, x[:, :4]) / weights.sum(1, keepdim=True)  # merged boxes
+        #     if redundant:
+        #         i = i[iou.sum(1) > 1]  # require redundancy
+
+        output[xi] = xywh2xyxy(x[i])
+    return output
+
 
 
 def yolox_postprocess(outputs, img_size, p6=False):

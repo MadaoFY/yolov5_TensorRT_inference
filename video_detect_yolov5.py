@@ -6,7 +6,8 @@ import numpy as np
 import tensorrt as trt
 
 from utils import trt_infer
-from utils.utils_detection import yaml_load, letterbox_image, scale_bboxes, non_max_suppression, Colors, draw_boxes
+from utils.utils_detection import yaml_load, letterbox_image, scale_bboxes, non_max_suppression, Colors, draw_boxes, \
+    non_max_suppression_v2
 
 
 def load_engine(engine_path):
@@ -28,7 +29,7 @@ class yolov5_engine_det:
         self.conf = conf
         self.iou = iou
         self.max_det = max_det
-        self.nms = non_max_suppression
+        self.nms = non_max_suppression_v2
 
         # self.context.set_binding_shape(0, [1, 3, self.resize[0], self.resize[1]])
 
@@ -45,13 +46,13 @@ class yolov5_engine_det:
         t1 = time.time()
         pred = trt_infer.do_inference_v2(self.context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
         pred = pred[0].reshape(self.context.get_binding_shape(1))
-        pred = torch.from_numpy(pred).to(self.device)
+        # pred = torch.from_numpy(pred).to(self.device)
         pred = self.nms(pred, conf_thres=self.conf, iou_thres=self.iou, agnostic=False, max_det=self.max_det)[0]
         t2 = time.time()
-        fps = int(1.0 / (t2 - t1))
+        fps = round((0.1 / (t2 - t1) * 10))
         times = round((t2 - t1) * 1000, 3)
         pred = scale_bboxes(pred, frame.shape[:2], self.resize)
-        pred = pred.cpu().numpy()
+        # pred = pred.cpu().numpy()
         for i in pred:
             # pred: x1, y1, x2, y2, conf, labels
             frame = draw_boxes(frame, i[:4], i[4], i[5], self.labels, 1, self.colors)
