@@ -1,4 +1,4 @@
 .idea
 __pycache__
-.mp4
-.engine
+*.mp4
+*.engine
