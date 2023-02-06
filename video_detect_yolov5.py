@@ -20,7 +20,7 @@ def load_engine(engine_path):
 
 class yolov5_engine_det:
     def __init__(self, engine_dir, catid_labels, conf=0.25, iou=0.45, max_det=300):
-        self.engine=load_engine(engine_dir)
+        self.engine = load_engine(engine_dir)
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.context = self.engine.create_execution_context()
         self.resize = self.engine.get_binding_shape(0)[2:]

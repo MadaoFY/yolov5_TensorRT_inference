@@ -45,7 +45,7 @@ def build_engine(
     builder = trt.Builder(logger)
     network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
     config = builder.create_builder_config()
-    config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 3 << 30)
+    config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 8 << 30)
 
     # Parse model file
     parser = trt.OnnxParser(network, logger)
@@ -153,7 +153,7 @@ class onnx2trt:
 
         self.builder = trt.Builder(self.logger)
         self.config = self.builder.create_builder_config()
-        self.config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 3 << 30)
+        self.config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 8 << 30)
 
         self.network = None
         self.profile = None
