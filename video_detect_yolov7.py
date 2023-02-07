@@ -68,22 +68,22 @@ def trans(img, size):
 
 
 def main(args):
-    times = []
     # 检测物体标签
     catid_labels = yaml_load(args.labels)['labels']
-    # 视频源
-    vc = cv.VideoCapture(args.video_dir)
     # 载入engine
-    yolo_draw = yolov7_engine_det(
+    yolo_det = yolov7_engine_det(
         args.engine_dir, catid_labels
     )
+    # 视频源
+    vc = cv.VideoCapture(args.video_dir)
 
+    times = []
     # 循环读取视频中的每一帧
     while vc.isOpened():
         ret, frame = vc.read()
 
         if ret is True:
-            frame, t = yolo_draw.draw(frame)
+            frame, t = yolo_det.draw(frame)
             print(f'{t}ms')
             times.append(t)
             cv.imshow('video', frame)
@@ -93,7 +93,7 @@ def main(args):
         else:
             break
     print(np.mean(times))
-    vc.release
+    vc.release()
     cv.destroyAllWindows()
 
 
