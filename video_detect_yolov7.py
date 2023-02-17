@@ -6,15 +6,8 @@ import numpy as np
 import tensorrt as trt
 
 from utils import trt_infer
-from utils.utils_detection import yaml_load, letterbox_image, scale_bboxes, non_max_suppression, Colors, draw_boxes
-
-
-def load_engine(engine_path):
-    # TRT_LOGGER = trt.Logger(trt.Logger.WARNING)  # INFO
-    logger = trt.Logger(trt.Logger.ERROR)
-    trt.init_libnvinfer_plugins(logger, '')
-    with open(engine_path, 'rb') as f, trt.Runtime(logger) as runtime:
-        return runtime.deserialize_cuda_engine(f.read())
+from utils.trt_infer import load_engine
+from utils.utils_detection import yaml_load, image_trans, scale_bboxes, non_max_suppression, Colors, draw_boxes
 
 
 class yolov7_engine_det:
@@ -27,6 +20,12 @@ class yolov7_engine_det:
         self.labels = catid_labels
 
         # self.context.set_binding_shape(0, [1, 3, self.resize[0], self.resize[1]])
+        self.inputs = None
+        self.outputs = None
+        self.bindings = None
+        self.stream = None
+
+        self.inputs, self.outputs, self.bindings, self.stream = trt_infer.allocate_buffers_v2(self.context)
 
     @staticmethod
     def get_colors_dict(catid_labels):
@@ -35,55 +34,46 @@ class yolov7_engine_det:
 
 
     def draw(self, frame):
-        x = trans(frame, self.resize)
-        inputs, outputs, bindings, stream = trt_infer.allocate_buffers_v2(self.context)
-        inputs[0].host = np.ascontiguousarray(x.flatten())
+        x = image_trans(frame, self.resize)
+        self.inputs[0].host = x.ravel()
         t1 = time.time()
-        pred = trt_infer.do_inference_v2(self.context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
+        pred = trt_infer.do_inference_v2(
+            self.context, bindings=self.bindings, inputs=self.inputs, outputs=self.outputs, stream=self.stream
+        )
         t2 = time.time()
         fps = int(1.0 / (t2 - t1))
         times = round((t2 - t1) * 1000, 3)
         num_det, boxes, conf, labels = pred
         num_det = num_det[0]
         if num_det > 0:
-            pred = np.concatenate((
-                boxes[:num_det * 4].reshape(-1, 4), np.expand_dims(conf[:num_det], 1), np.expand_dims(labels[:num_det], 1)
-            ), axis=-1)
-            pred = scale_bboxes(pred, frame.shape[:2], self.resize)
-            for i in pred:
-                # pred: x1, y1, x2, y2, conf, labels
-                frame = draw_boxes(frame, i[:4], i[4], i[5], self.labels, 1, self.colors)
+            # conf = conf[:num_det]
+            # labels = labels[:num_det]
+            boxes = boxes[:num_det * 4].reshape(-1, 4)
+            boxes = scale_bboxes(boxes, frame.shape[:2], self.resize)
+            for i in range(num_det):
+                frame = draw_boxes(frame, boxes[i], conf[i], labels[i], self.labels, 0.7, self.colors)
         frame = cv.putText(frame, f'fps: {fps}', (10, 30), fontFace=cv.FONT_HERSHEY_SIMPLEX, fontScale=1, thickness=2,
                            lineType=cv.LINE_AA, color=(255, 0, 255))
         return frame, times
 
 
-def trans(img, size):
-    img_new = letterbox_image(img)
-    img_new = cv.resize(img_new, size, interpolation=cv.INTER_LINEAR)
-    img_new = img_new.transpose(2, 0, 1)
-    img_new = np.expand_dims(img_new, 0)
-    img_new = np.float32(img_new) / 255.0
-    return img_new
-
-
 def main(args):
+    times = []
     # 检测物体标签
     catid_labels = yaml_load(args.labels)['labels']
-    # 载入engine
-    yolo_det = yolov7_engine_det(
-        args.engine_dir, catid_labels
-    )
     # 视频源
     vc = cv.VideoCapture(args.video_dir)
+    # 载入engine
+    yolo_draw = yolov7_engine_det(
+        args.engine_dir, catid_labels
+    )
 
-    times = []
     # 循环读取视频中的每一帧
     while vc.isOpened():
         ret, frame = vc.read()
 
         if ret is True:
-            frame, t = yolo_det.draw(frame)
+            frame, t = yolo_draw.draw(frame)
             print(f'{t}ms')
             times.append(t)
             cv.imshow('video', frame)

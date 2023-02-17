@@ -109,6 +109,12 @@ def locate_files(data_paths, filenames, err_msg=""):
             raise FileNotFoundError("Could not find {:}. Searched in data paths: {:}\n{:}".format(filename, data_paths, err_msg))
     return found_files
 
+def load_engine(engine_path):
+    # TRT_LOGGER = trt.Logger(trt.Logger.WARNING)  # INFO
+    logger = trt.Logger(trt.Logger.ERROR)
+    trt.init_libnvinfer_plugins(logger, '')
+    with open(engine_path, 'rb') as f, trt.Runtime(logger) as runtime:
+        return runtime.deserialize_cuda_engine(f.read())
 
 # Simple helper data class that's a little nicer to use than a 2-tuple.
 class HostDeviceMem(object):

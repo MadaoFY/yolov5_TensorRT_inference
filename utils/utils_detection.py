@@ -79,17 +79,26 @@ def letterbox_image(image, return_padding=False):
     else:
         p = int((w - h) // 2)
         image = cv.copyMakeBorder(image, p, (w - h - p), 0, 0, cv.BORDER_CONSTANT, value=0)
-    # if h > w:
-    #     p = h - w
-    #     image = cv.copyMakeBorder(image, 0, 0, 0, p, cv.BORDER_CONSTANT, value=0)
-    # else:
-    #     p = w - h
-    #     image = cv.copyMakeBorder(image, 0, p, 0, 0, cv.BORDER_CONSTANT, value=0)
 
     if return_padding:
         return image, p
     else:
         return image
+
+def image_trans(img, size):
+    scale = min((size[0] / img.shape[0]), (size[1] / img.shape[1]), 1.1)
+    new_size = (int(img.shape[1] * scale), int(img.shape[0] * scale))
+    img_new = cv.resize(img, new_size, interpolation=cv.INTER_LINEAR)
+    top = round((size[0] - new_size[1]) * 0.5)
+    bottom = (size[0] - new_size[1]) - top
+    left = round((size[1] - new_size[0]) * 0.5)
+    right = (size[1] - new_size[0]) - left
+    img_new = cv.copyMakeBorder(img_new, top, bottom, left, right, cv.BORDER_CONSTANT, value=0)
+    img_new = img_new.transpose((2, 0, 1))[::-1]
+    img_new = np.expand_dims(img_new, 0)
+    img_new = np.ascontiguousarray(img_new).astype(np.float32)
+    img_new = img_new / 255.0
+    return img_new
 
 
 def scale_bboxes(bboxes, img_ori_hw, img_det_hw):
@@ -155,14 +164,17 @@ def draw_boxes(img, boxes, scores, labels, catid_labels, textscale=1, color_dict
     boxes = tuple(boxes.astype('int'))
     if color_dicts is None:
         color_dicts = {k:(0,0,255) for k in labels.keys}
-    img0 = cv.rectangle(img, boxes[:2], boxes[2:], thickness=2, lineType=cv.LINE_AA,
-                        color=color_dicts[labels])
+
     text_size, _ = cv.getTextSize(f'{catid_labels[labels]}:{scores:.2f}', fontFace=cv.FONT_HERSHEY_DUPLEX,
                                   fontScale=textscale, thickness=1)
     text_w, text_h = text_size
-    fillarea = np.asarray([boxes[:2], [boxes[0] + text_w + 1, boxes[1]],
-                           [boxes[0] + text_w + 1, boxes[1] + text_h + 2], [boxes[0], boxes[1] + text_h + 2]])
-    img0 = cv.fillPoly(img0, [fillarea], color=color_dicts[labels])
+    # fillarea = np.asarray([boxes[:2], [boxes[0] + text_w + 1, boxes[1]],
+    #                        [boxes[0] + text_w + 1, boxes[1] + text_h + 2], [boxes[0], boxes[1] + text_h + 2]])
+    img0 = cv.rectangle(img, boxes[:2], boxes[2:], thickness=2, lineType=cv.LINE_AA,
+                        color=color_dicts[labels])
+    # img0 = cv.fillPoly(img0, [fillarea], color=color_dicts[labels])
+    img0 = cv.rectangle(img0, boxes[:2], (boxes[0] + text_w + 1, boxes[1] + text_h + 2),
+                        thickness=-1, color=color_dicts[labels])
     img0 = cv.putText(img0, f'{catid_labels[labels]}:{scores:.2f}',
                       (boxes[0], boxes[1] + text_h),
                       fontFace=cv.FONT_HERSHEY_DUPLEX, fontScale=textscale, thickness=1,
@@ -177,7 +189,7 @@ def non_max_suppression(prediction,
                         conf_thres=0.25,
                         iou_thres=0.45,
                         agnostic=False,
-                        max_det=200):
+                        max_det=300):
     bs = prediction.shape[0]  # batch size
     xc = prediction[..., 4] > conf_thres  # candidates
     # Settings
@@ -207,7 +219,6 @@ def non_max_suppression(prediction,
         # Apply finite constraint
         # if not torch.isfinite(x).all():
         #     x = x[torch.isfinite(x).all(1)]
-
         # Check shape
         n = x.shape[0]  # number of boxes
         if not n:  # no boxes
@@ -237,15 +248,15 @@ def non_max_suppression_v2(prediction,
                         conf_thres=0.25,
                         iou_thres=0.45,
                         agnostic=False,
-                        max_det=200):
+                        max_det=300):
     bs = prediction.shape[0]  # batch size
     xc = prediction[..., 4] > conf_thres  # candidates
     # Settings
     # min_wh = 2  # (pixels) minimum box width and height
-    # max_wh = 7680  # (pixels) maximum box width and height
+    max_wh = 7680  # (pixels) maximum box width and height
     max_nms = 30000  # maximum number of boxes into torchvision.ops.nms()
-    # redundant = True  # require redundant detections
-    # merge = False  # use merge-NMS
+    redundant = True  # require redundant detections
+    merge = False  # use merge-NMS
     output = [np.zeros((0, 6), dtype=np.float32)] * bs
     for xi, x in enumerate(prediction):  # image index, image inference
         # Apply constraints
@@ -274,21 +285,20 @@ def non_max_suppression_v2(prediction,
         # Batched NMS
         # c = x[:, 5:6] * (0 if agnostic else max_wh)  # classes
         # boxes, scores = x[:, :4] + c, x[:, 4]  # boxes (offset by class), scores
+        # i = torchvision.ops.nms(boxes, scores, iou_thres)  # NMS
         # i = cv.dnn.NMSBoxes(boxes, scores, conf_thres, iou_thres)
         c = x[:, 5].ravel().astype("int32")
         i = cv.dnn.NMSBoxesBatched(x[:, :4], x[:, 4], c, conf_thres, iou_thres, None, max_det)
-        # x[i] = xywh2xyxy(x[i])
-        # if merge and (1 < n < 3E3):  # Merge NMS (boxes merged using weighted mean)
-        #     # update boxes as boxes(i,4) = weights(i,n) * boxes(n,4)
-        #     iou = box_iou(x[:, :4][i], x[:, :4]) > iou_thres  # iou matrix
-        #     weights = iou * x[:, 4][None]  # box weights
-        #     x[i, :4] = np.matmul(weights, x[:, :4]) / weights.sum(1, keepdim=True)  # merged boxes
-        #     if redundant:
-        #         i = i[iou.sum(1) > 1]  # require redundancy
+        if merge and (1 < n < 3E3):  # Merge NMS (boxes merged using weighted mean)
+            # update boxes as boxes(i,4) = weights(i,n) * boxes(n,4)
+            iou = box_iou(x[:, :4][i], x[:, :4]) > iou_thres  # iou matrix
+            weights = iou * x[:, 4][None]  # box weights
+            x[i, :4] = np.matmul(weights, x[:, :4]) / weights.sum(1, keepdim=True)  # merged boxes
+            if redundant:
+                i = i[iou.sum(1) > 1]  # require redundancy
 
         output[xi] = xywh2xyxy(x[i])
     return output
-
 
 
 def yolox_postprocess(outputs, img_size, p6=False):

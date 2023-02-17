@@ -6,32 +6,28 @@ import numpy as np
 import tensorrt as trt
 
 from utils import trt_infer
-from utils.utils_detection import yaml_load, letterbox_image, scale_bboxes, non_max_suppression, \
-    yolox_postprocess, Colors, draw_boxes
-
-
-def load_engine(engine_path):
-    # TRT_LOGGER = trt.Logger(trt.Logger.WARNING)  # INFO
-    logger = trt.Logger(trt.Logger.ERROR)
-    trt.init_libnvinfer_plugins(logger, '')
-    with open(engine_path, 'rb') as f, trt.Runtime(logger) as runtime:
-        return runtime.deserialize_cuda_engine(f.read())
+from utils.trt_infer import load_engine
+from utils.utils_detection import yaml_load, image_trans, scale_bboxes, non_max_suppression, yolox_postprocess, \
+    Colors, draw_boxes
 
 
 class yolox_engine_det:
-    def __init__(self, engine_dir, catid_labels, conf=0.25, iou=0.45, max_det=300):
+    def __init__(self, engine_dir, catid_labels):
         self.engine = load_engine(engine_dir)
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.context = self.engine.create_execution_context()
         self.resize = self.engine.get_binding_shape(0)[2:]
         self.colors = self.get_colors_dict(catid_labels)
         self.labels = catid_labels
-        self.conf = conf
-        self.iou = iou
-        self.max_det = max_det
         self.nms = non_max_suppression
 
         # self.context.set_binding_shape(0, [1, 3, self.resize[0], self.resize[1]])
+        self.inputs = None
+        self.outputs = None
+        self.bindings = None
+        self.stream = None
+
+        self.inputs, self.outputs, self.bindings, self.stream = trt_infer.allocate_buffers_v2(self.context)
 
     @staticmethod
     def get_colors_dict(catid_labels):
@@ -39,24 +35,24 @@ class yolox_engine_det:
         return color_dicts.get_id_and_colors()
 
 
-    def draw(self, frame):
-        x = trans(frame, self.resize)
-        inputs, outputs, bindings, stream = trt_infer.allocate_buffers_v2(self.context)
-        inputs[0].host = np.ascontiguousarray(x.flatten())
+    def draw(self, frame, conf=0.25, iou=0.45, max_det=200):
+        x = image_trans(frame, self.resize)
+        self.inputs[0].host = x.ravel()
         t1 = time.time()
-        pred = trt_infer.do_inference_v2(self.context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
+        pred = trt_infer.do_inference_v2(
+            self.context, bindings=self.bindings, inputs=self.inputs, outputs=self.outputs, stream=self.stream
+        )
         pred = pred[0].reshape(self.context.get_binding_shape(1))
         pred = yolox_postprocess(pred, self.resize, p6=False)
         pred = torch.from_numpy(pred).to(self.device)
-        pred = self.nms(pred, conf_thres=self.conf, iou_thres=self.iou, agnostic=False, max_det=self.max_det)[0]
+        pred = self.nms(pred, conf_thres=conf, iou_thres=iou, agnostic=False, max_det=max_det)[0]
         t2 = time.time()
         fps = int(1.0 / (t2 - t1))
         pred = scale_bboxes(pred, frame.shape[:2], self.resize)
         pred = pred.cpu().numpy()
         for i in pred:
             # pred: x1, y1, x2, y2, conf, labels
-            frame = draw_boxes(frame, i[:4], i[4], i[5], self.labels, 1, self.colors)
-            # print(f"{self.labels[i[5]]}:{i[:4].astype('int')}")
+            frame = draw_boxes(frame, i[:4], i[4], i[5], self.labels, 0.7, self.colors)
             # bbox = tuple(i[:4].astype('int'))
             # frame = cv.rectangle(frame, bbox[:2], bbox[2:], thickness=2, lineType=cv.LINE_AA,
             #                      color=self.colors[i[-1]]
@@ -70,31 +66,20 @@ class yolox_engine_det:
         return frame
 
 
-def trans(img, size):
-    img_new = letterbox_image(img)
-    img_new = cv.resize(img_new, size, interpolation=cv.INTER_LINEAR)
-    img_new = img_new.transpose(2, 0, 1)
-    img_new = np.expand_dims(img_new, 0)
-    img_new = np.float32(img_new)
-    return img_new
-
-
 def main(args):
     # 检测物体标签
     catid_labels = yaml_load(args.labels)['labels']
-    # 载入engine
-    yolo_det = yolox_engine_det(
-        args.engine_dir, catid_labels, conf=args.conf_thres, iou=args.iou_thres, max_det=args.max_det
-    )
     # 视频源
     vc = cv.VideoCapture(args.video_dir)
+    # 载入engine
+    yolo_draw = yolox_engine_det(args.engine_dir, catid_labels)
 
     # 循环读取视频中的每一帧
     while vc.isOpened():
         ret, frame = vc.read()
 
         if ret is True:
-            frame = yolo_det.draw(frame)
+            frame = yolo_draw.draw(frame, conf=args.conf_thres, iou=args.iou_thres, max_det=args.max_det)
             cv.imshow('video', frame)
 
             if cv.waitKey(int(1000 / vc.get(cv.CAP_PROP_FPS))) & 0xFF == 27:
