@@ -35,7 +35,7 @@ class yolov7_engine_det:
 
     def draw(self, frame):
         x = image_trans(frame, self.resize)
-        self.inputs[0].host = x.ravel()
+        np.copyto(self.inputs[0].host, x.ravel())
         t1 = time.time()
         pred = trt_infer.do_inference_v2(
             self.context, bindings=self.bindings, inputs=self.inputs, outputs=self.outputs, stream=self.stream
@@ -78,7 +78,7 @@ def main(args):
             times.append(t)
             cv.imshow('video', frame)
 
-            if cv.waitKey(int(1000 / vc.get(cv.CAP_PROP_FPS))) & 0xFF == 27:
+            if cv.waitKey(30) & 0xFF == 27:
                 break
         else:
             break

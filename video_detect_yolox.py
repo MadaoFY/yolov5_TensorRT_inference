@@ -37,7 +37,7 @@ class yolox_engine_det:
 
     def draw(self, frame, conf=0.25, iou=0.45, max_det=200):
         x = image_trans(frame, self.resize)
-        self.inputs[0].host = x.ravel()
+        np.copyto(self.inputs[0].host, x.ravel())
         t1 = time.time()
         pred = trt_infer.do_inference_v2(
             self.context, bindings=self.bindings, inputs=self.inputs, outputs=self.outputs, stream=self.stream
@@ -82,7 +82,7 @@ def main(args):
             frame = yolo_draw.draw(frame, conf=args.conf_thres, iou=args.iou_thres, max_det=args.max_det)
             cv.imshow('video', frame)
 
-            if cv.waitKey(int(1000 / vc.get(cv.CAP_PROP_FPS))) & 0xFF == 27:
+            if cv.waitKey(30) & 0xFF == 27:
                 break
         else:
             break

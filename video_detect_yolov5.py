@@ -77,7 +77,7 @@ def main(args):
             times.append(t)
             cv.imshow('video', frame)
 
-            if cv.waitKey(int(1000 / vc.get(cv.CAP_PROP_FPS))) & 0xFF == 27:
+            if cv.waitKey(30) & 0xFF == 27:
                 break
         else:
             break
