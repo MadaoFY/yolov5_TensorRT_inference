@@ -24,9 +24,9 @@ yolox(不可在生成的engine中添加nms模块)
     |-labels_coco.yaml  # coco数据集类别标签
     |-labels_voc.yaml   # voc数据集类别标签
     |-onnx2trt.py       # onnx模型转engine的脚本，已添加EfficientNMS算子的支持
-    |-yolo_detect_v1.py    # yolov5的视频检测脚本
-    |-yolo_detect_v2.py    # yolov7的视频检测脚本，该脚本使用的trt模型添加了EfficientNMS算子
-    |-video_detect_yolovx.py    # yolovx的视频检测脚本
+    |-yolo_detect_v1.py    # 不带nms算子的视频检测脚本
+    |-yolo_detect_v2.py    # 带nms算子的视频检测脚本，该脚本使用的trt模型添加了EfficientNMS算子
+    |-yolox_detect.py    # yolovx的视频检测脚本
 ```
 
 以下将使用yolov5s模型演示如何量化及用于视频的推理。
