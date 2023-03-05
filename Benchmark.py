@@ -6,7 +6,6 @@
 import time
 import numpy as np
 import tensorrt as trt
-import timm.data.transforms_factory
 
 from tqdm import tqdm
 from utils import trt_infer

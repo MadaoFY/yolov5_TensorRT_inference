@@ -1,4 +1,6 @@
 .idea
 __pycache__
 *.mp4
+*.onnx
 *.engine
+calibration

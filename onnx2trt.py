@@ -39,7 +39,7 @@ def AddEfficientNMSPlugin(conf_thres=0.25, iou_thres=0.45, max_det=200, box_codi
 def build_engine(
         onnx_file, model_engine, min_shape, opt_shape, max_shape,
         fp16=False, int8=False, imgs_dir=None, imgs_list=None, n_iteration=128, cache_file=None,
-        add_nms=False, conf_thres=0.25, iou_thres=0.45, max_det=200, box_coding=1
+        v8_head=False, add_nms=False, conf_thres=0.25, iou_thres=0.45, max_det=200, box_coding=1
 ):
     logger = trt.Logger(trt.Logger.ERROR)
     builder = trt.Builder(logger)
@@ -52,7 +52,7 @@ def build_engine(
     if not os.path.exists(onnx_file):
         print("ONNX file is not exists!")
         exit()
-    print("Succeeded finding ONNX file!")
+    print("Succeeded finding .onnx file!")
     with open(onnx_file, "rb") as model:
         if not parser.parse(model.read()):
             print("Failed parsing .onnx file!")
@@ -62,31 +62,38 @@ def build_engine(
         else:
             print("Succeeded parsing .onnx file!")
 
+    if v8_head:
+        outputTensor = network.get_output(0)
+        print(f'v8 {outputTensor.name} shape:{outputTensor.shape}')
+        network.unmark_output(outputTensor)
+        outputTensor = network.add_shuffle(outputTensor)
+        outputTensor.first_transpose = (0, 2, 1)
+        network.mark_output(outputTensor.get_output(0))
+
     # 添加nms算子
     if add_nms:
         """
         对原输出进行预处理，拆分成 目标框数据 和 类别置信度数据 两个矩阵，背景置信度要与类别置信度相乘。
         [1, 8500, 4 + 1 + 80] ——> [1, 8500, 4] + [1, 8500, 1 + 80] ——> [1, 8500, 4] + [1, 8500, 80]
         """
-        print('Add EfficientNMS_TRT!')
         outputTensor = network.get_output(0)
         print(f'{outputTensor.name} shape:{outputTensor.shape}')
         bs, num_boxes, det_res = outputTensor.shape
         network.unmark_output(outputTensor)
-        shapes = [bs, num_boxes, 4]
-        boxes = network.add_slice(outputTensor, (0, 0, 0), shapes, (1, 1, 1))
-        shapes[-1] = 1
-        scores = network.add_slice(outputTensor, (0, 0, 4), shapes, (1, 1, 1))
-        shapes[-1] = det_res - 5
-        obj = network.add_slice(outputTensor, (0, 0, 5), shapes, (1, 1, 1))
-        obj = network.add_elementwise(
-            scores.get_output(0), obj.get_output(0), trt.ElementWiseOperation.PROD
-        )
-        """
-        添加efficientNMS
-        """
+        xycwh = network.add_slice(outputTensor, (0, 0, 0), (bs, num_boxes, 4), (1, 1, 1))
+        if v8_head:
+            obj = network.add_slice(
+                outputTensor, (0, 0, 4), (bs, num_boxes, det_res - 4), (1, 1, 1)
+            )
+        else:
+            scores = network.add_slice(outputTensor, (0, 0, 4), (bs, num_boxes, 1), (1, 1, 1))
+            obj = network.add_slice(outputTensor, (0, 0, 5), (bs, num_boxes, det_res - 5), (1, 1, 1))
+            obj = network.add_elementwise(
+                scores.get_output(0), obj.get_output(0), trt.ElementWiseOperation.PROD
+            )
+        print('Add EfficientNMS_TRT!')
         nms = AddEfficientNMSPlugin(conf_thres, iou_thres, max_det, box_coding)
-        pluginlayer = network.add_plugin_v2([boxes.get_output(0), obj.get_output(0)], nms)
+        pluginlayer = network.add_plugin_v2([xycwh.get_output(0), obj.get_output(0)], nms)
         pluginlayer.get_output(0).name = "num_dets"
         pluginlayer.get_output(1).name = "det_boxes"
         pluginlayer.get_output(2).name = "det_scores"
@@ -162,7 +169,9 @@ class onnx2trt:
         self.FP16 = False
         self.INT8 = False
 
-    def create_network(self, onnx_dir, add_nms=False, conf_thres=0.25, iou_thres=0.45, max_det=200, box_coding=1):
+    def create_network(
+            self, onnx_dir, v8_head=False, add_nms=False, conf_thres=0.25, iou_thres=0.45, max_det=200, box_coding=1
+    ):
 
         self.network = self.builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
         # Parse model file
@@ -170,7 +179,7 @@ class onnx2trt:
         if not os.path.exists(onnx_dir):
             print("ONNX file is not exists!")
             exit()
-        print("Succeeded finding ONNX file!")
+        print("Succeeded finding .onnx file!")
         with open(onnx_dir, "rb") as model:
             if not self.parser.parse(model.read()):
                 print("Failed parsing .onnx file!")
@@ -180,31 +189,39 @@ class onnx2trt:
             else:
                 print("Succeeded parsing .onnx file!")
 
+        if v8_head:
+            outputTensor = self.network.get_output(0)
+            print(f'v8 {outputTensor.name} shape:{outputTensor.shape}')
+            self.network.unmark_output(outputTensor)
+            outputTensor = self.network.add_shuffle(outputTensor)
+            # (bs, det_res, num_boxes ) -> (bs, num_boxes, det_res)
+            outputTensor.first_transpose = (0, 2, 1)
+            self.network.mark_output(outputTensor.get_output(0))
+
         # 添加nms算子
         if add_nms:
             """
             对原输出进行预处理，拆分成 目标框数据 和 类别置信度数据 两个矩阵，背景置信度要与类别置信度相乘。
             [1, 8500, 4 + 1 + 80] ——> [1, 8500, 4] + [1, 8500, 1 + 80] ——> [1, 8500, 4] + [1, 8500, 80]
             """
-            print('Add EfficientNMS_TRT!')
             outputTensor = self.network.get_output(0)
             print(f'{outputTensor.name} shape:{outputTensor.shape}')
             bs, num_boxes, det_res = outputTensor.shape
             self.network.unmark_output(outputTensor)
-            shapes = [bs, num_boxes, 4]
-            boxes = self.network.add_slice(outputTensor, (0, 0, 0), shapes, (1, 1, 1))
-            shapes[-1] = 1
-            scores = self.network.add_slice(outputTensor, (0, 0, 4), shapes, (1, 1, 1))
-            shapes[-1] = det_res - 5
-            obj = self.network.add_slice(outputTensor, (0, 0, 5), shapes, (1, 1, 1))
-            obj = self.network.add_elementwise(
-                scores.get_output(0), obj.get_output(0), trt.ElementWiseOperation.PROD
-            )
-            """
-            添加efficientNMS
-            """
+            xycwh = self.network.add_slice(outputTensor, (0, 0, 0), (bs, num_boxes, 4), (1, 1, 1))
+            if v8_head:
+                obj = self.network.add_slice(
+                    outputTensor, (0, 0, 4), (bs, num_boxes, det_res - 4), (1, 1, 1)
+                )
+            else:
+                scores = self.network.add_slice(outputTensor, (0, 0, 4), (bs, num_boxes, 1), (1, 1, 1))
+                obj = self.network.add_slice(outputTensor, (0, 0, 5), (bs, num_boxes, det_res - 5), (1, 1, 1))
+                obj = self.network.add_elementwise(
+                    scores.get_output(0), obj.get_output(0), trt.ElementWiseOperation.PROD
+                )
+            print('Add EfficientNMS_TRT!')
             nms = AddEfficientNMSPlugin(conf_thres, iou_thres, max_det, box_coding)
-            pluginlayer = self.network.add_plugin_v2([boxes.get_output(0), obj.get_output(0)], nms)
+            pluginlayer = self.network.add_plugin_v2([xycwh.get_output(0), obj.get_output(0)], nms)
             pluginlayer.get_output(0).name = "num_dets"
             pluginlayer.get_output(1).name = "det_boxes"
             pluginlayer.get_output(2).name = "det_scores"
@@ -251,7 +268,7 @@ class onnx2trt:
         self.profile.set_shape(inputTensor.name, min_shape, opt_shape, max_shape)
         self.config.add_optimization_profile(self.profile)
 
-        print('Now, engine is building!')
+        print('Now, engine is building...')
         t1 = time.time()
         plan = self.builder.build_serialized_network(self.network, self.config)
         t2 = time.time()
@@ -277,6 +294,7 @@ def main(args):
     yolo_engine = onnx2trt()
     yolo_engine.create_network(
         onnx_dir,
+        v8_head=args.yolov8_head,
         add_nms=args.add_nms,
         conf_thres=args.conf_thres,
         iou_thres=args.iou_thres,
@@ -301,7 +319,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description=__doc__)
     # onnx模型
-    parser.add_argument('--onnx_dir', type=str, default='./models_onnx/yolov5s.onnx', help='onnx path')
+    parser.add_argument('--onnx_dir', type=str, default='./models_onnx/yolov8m.onnx', help='onnx path')
     # engine模型保存地址
     parser.add_argument('--engine_dir', type=str, default=None, help='engine path')
     # 最小的输入shape
@@ -325,8 +343,10 @@ if __name__ == '__main__':
     parser.add_argument('--n_iteration', type=int, default=512, help='Iteration for int8 calibration')
     # cache保存位置
     parser.add_argument('--cache_file', default=None, help='Int8 cache path')
+    # 是否为yolov8的检测头
+    parser.add_argument('--yolov8_head', type=bool, default=True, choices=[True, False], help='yolov8_head or not')
     # 是否添加nms
-    parser.add_argument('--add_nms', type=bool, default=True, choices=[True, False], help='add efficientNMS')
+    parser.add_argument('--add_nms', type=bool, default=False, choices=[True, False], help='add efficientNMS')
     # 只有得分大于置信度的预测框会被保留下来
     parser.add_argument('--conf_thres', type=float, default=0.25, help='confidence threshold')
     # 非极大抑制所用到的nms_iou大小
@@ -338,11 +358,4 @@ if __name__ == '__main__':
     print(args)
 
     main(args)
-
-
-
-
-
-
-
 

@@ -1,5 +1,10 @@
 # yolov5_TensorRT_inference
-记录yolov5的TensorRT量化及推理代码，经实测可运行于Jetson平台。可实现yolov5、yolov7、yolox模型的量化(fp16, int8)及推理，并且可将yolov5s、yolov7tiny、yoloxs这些的小模型部署在Jetson nano 4g上用于摄像头的检测。
+记录yolov5的TensorRT量化(fp16, int8)及推理代码。经实测可运行于Jetson平台，可将yolov5s、yolov8s这类的小模型部署在Jetson nano 4g上用于摄像头的检测。  
+模型支持：  
+yolov5  
+yolov7  
+yolov8  
+yolox(不可在生成的engine中添加nms模块)
 
 <div align=center>
 <img src="https://github.com/MadaoFY/yolov5_TensorRT_inference/blob/main/doc/yolov5s_det.png">
@@ -19,8 +24,8 @@
     |-labels_coco.yaml  # coco数据集类别标签
     |-labels_voc.yaml   # voc数据集类别标签
     |-onnx2trt.py       # onnx模型转engine的脚本，已添加EfficientNMS算子的支持
-    |-video_detect_yolov5.py    # yolov5的视频检测脚本
-    |-video_detect_yolov7.py    # yolov7的视频检测脚本，该脚本使用的trt模型添加了EfficientNMS算子
+    |-yolo_detect_v1.py    # yolov5的视频检测脚本
+    |-yolo_detect_v2.py    # yolov7的视频检测脚本，该脚本使用的trt模型添加了EfficientNMS算子
     |-video_detect_yolovx.py    # yolovx的视频检测脚本
 ```
 
@@ -54,6 +59,7 @@ python onnx2trt.py  --onnx_dir ./models_onnx/yolov5s.onnx --engine_dir ./models_
 - ```--imgs_dir``` 校准集路径
 - ```--n_iteration``` int8量化校准轮次
 - ```--cache_file``` 是否生成cache
+- ```--yolov8_head``` 是否为yolov8的检测头(注意,yolov8的输出与yolov5不一样)
 - ```--add_nms``` 添加EfficientNMS算子
 - ```--conf_thres``` nms的置信度设置
 - ```--iou_thres``` nms的iou设置
@@ -62,23 +68,24 @@ python onnx2trt.py  --onnx_dir ./models_onnx/yolov5s.onnx --engine_dir ./models_
 更详细参数说明可以在脚本中查看。
 
 ## 视频推理
-### 1.不带EfficientNMS算子的推理脚本(video_detect_yolov5.py)  
+### 1.不带EfficientNMS算子的推理脚本(yolo_detect_v1.py)  
 你需要准备一个模型输出类别的labels文件，具体可参考仓库的labels_coco.yaml文件。本演示中用到模型为coco训练的yolov5s模型，所以需要用到相对应的coco类别。如果你使用的是yolov5、yolov7模型，运行video_detect_yolov5.py脚本，yolox模型运行video_detect_yolox.py脚本。以yolov5s.engine推理为例。
 ```shell
-python video_detect_yolov5.py  --video_dir ./sample_1080p_h265.mp4 --engine_dir ./models_trt/yolov5s.engine --labels ./labels_coco.yaml
+python yolo_detect_v1.py  --video_dir ./sample_1080p_h265.mp4 --engine_dir ./models_trt/yolov5s.engine --labels ./labels_coco.yaml
 ```
 
 - ```--video_dir``` 视频源路径
 - ```--engine_dir``` trt模型路径
 - ```--labels``` 模型labels文件
+- ```--yolov8_head``` 是否为yolov8的检测头
 - ```--conf_thres``` nms的置信度设置
 - ```--iou_thres``` nms的iou设置
 - ```--max_det``` nms输出的最大检测数量
 
-### 2.带EfficientNMS算子的推理脚本(video_detect_yolov7.py)  
-video_detect_yolov7.py脚本里的所使用trt模型已添加EfficientNMS算子，所以无需在对nms参数进行设置    
+### 2.带EfficientNMS算子的推理脚本(yolo_detect_v2.py)  
+yolo_detect_v2.py脚本里的所使用trt模型已添加EfficientNMS算子，所以无需在对nms参数进行设置    
 ```shell
-python video_detect_yolov7.py  --video_dir ./sample_1080p_h265.mp4 --engine_dir ./models_trt/yolov7_nms.engine --labels ./labels_coco.yaml
+python yolo_detect_v2.py  --video_dir ./sample_1080p_h265.mp4 --engine_dir ./models_trt/yolov7_nms.engine --labels ./labels_coco.yaml
 ```
 
 - ```--video_dir``` 视频源路径
