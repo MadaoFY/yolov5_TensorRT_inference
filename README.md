@@ -59,7 +59,7 @@ python onnx2trt.py  --onnx_dir ./models_onnx/yolov5s.onnx --engine_dir ./models_
 - ```--imgs_dir``` 校准集路径
 - ```--n_iteration``` int8量化校准轮次
 - ```--cache_file``` 是否生成cache
-- ```--yolov8_head``` 是否为yolov8的检测头(注意,yolov8的输出与yolov5不一样)
+- ```--yolov8_head``` 是否为yolov8的检测头(注意，yolov8的输出与yolov5不一样)
 - ```--add_nms``` 添加EfficientNMS算子
 - ```--conf_thres``` nms的置信度设置
 - ```--iou_thres``` nms的iou设置
