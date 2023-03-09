@@ -58,7 +58,7 @@ class yolo_engine_det:
 def main(args):
     times = []
     # 检测物体标签
-    catid_labels = yaml_load(args.labels)['labels']
+    catid_labels = yaml_load(args.labels)
     # 视频源
     vc = cv.VideoCapture(args.video_dir)
     # 载入engine
