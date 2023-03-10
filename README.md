@@ -69,7 +69,7 @@ python onnx2trt.py  --onnx_dir ./models_onnx/yolov5s.onnx --engine_dir ./models_
 
 ## 视频推理
 ### 1.不带EfficientNMS算子的推理脚本(yolo_detect_v1.py)  
-你需要准备一个模型输出类别的labels文件，具体可参考仓库的labels_coco.yaml文件。本演示中用到模型为coco训练的yolov5s模型，所以需要用到相对应的coco类别。如果你使用的是yolov5、yolov7模型，运行video_detect_yolov5.py脚本，yolox模型运行video_detect_yolox.py脚本。以yolov5s.engine推理为例。
+你需要准备一个模型输出类别的labels文件，具体可参考仓库的labels_coco.yaml文件。本演示中用到模型为coco训练的yolov5s模型，所以需要用到相对应的coco类别。如果你使用的是yolov5、yolov7模型，运行yolo_detect_v1.py脚本，yolox模型运行yolox_detect.py脚本。以yolov5s.engine推理为例。
 ```shell
 python yolo_detect_v1.py  --video_dir ./sample_1080p_h265.mp4 --engine_dir ./models_trt/yolov5s.engine --labels ./labels_coco.yaml
 ```
@@ -77,7 +77,6 @@ python yolo_detect_v1.py  --video_dir ./sample_1080p_h265.mp4 --engine_dir ./mod
 - ```--video_dir``` 视频源路径
 - ```--engine_dir``` trt模型路径
 - ```--labels``` 模型labels文件
-- ```--yolov8_head``` 是否为yolov8的检测头
 - ```--conf_thres``` nms的置信度设置
 - ```--iou_thres``` nms的iou设置
 - ```--max_det``` nms输出的最大检测数量
