@@ -6,7 +6,7 @@ import numpy as np
 
 from utils import trt_infer
 from utils.trt_infer import load_engine
-from utils.utils_detection import yaml_load, image_trans, scale_bboxes, non_max_suppression, yolox_postprocess, \
+from utils.utils_detection import yaml_load, image_trans, scale_bboxes, non_max_suppression_torch, yolox_postprocess, \
     Colors, draw_boxes
 
 
@@ -18,7 +18,7 @@ class yolox_engine_det:
         self.resize = self.engine.get_binding_shape(0)[2:]
         self.colors = self.get_colors_dict(catid_labels)
         self.labels = catid_labels
-        self.nms = non_max_suppression
+        self.nms = non_max_suppression_torch
 
         # self.context.set_binding_shape(0, [1, 3, self.resize[0], self.resize[1]])
         self.inputs = None
@@ -34,7 +34,7 @@ class yolox_engine_det:
         return color_dicts.get_id_and_colors()
 
 
-    def draw(self, frame, v8_head=False, conf=0.25, iou=0.45, max_det=200):
+    def draw(self, frame, conf=0.25, iou=0.45, max_det=200):
         x = image_trans(frame, self.resize)
         np.copyto(self.inputs[0].host, x.ravel())
         t1 = time.time()
@@ -44,14 +44,13 @@ class yolox_engine_det:
         pred = pred[0].reshape(self.context.get_binding_shape(1))
         pred = yolox_postprocess(pred, self.resize, p6=False)
         pred = torch.from_numpy(pred).to(self.device)
-        pred = self.nms(pred, v8_head=v8_head, conf_thres=conf, iou_thres=iou, agnostic=False, max_det=max_det)[0]
+        pred = self.nms(pred, False, conf_thres=conf, iou_thres=iou, agnostic=False, max_det=max_det)[0]
         t2 = time.time()
         fps = int(1.0 / (t2 - t1))
         pred = scale_bboxes(pred, frame.shape[:2], self.resize)
         pred = pred.cpu().numpy()
         for i in pred:
             # pred: x1, y1, x2, y2, conf, labels
-            frame = draw_boxes(frame, i[:4], i[4], i[5], self.labels, 0.7, self.colors)
             # bbox = tuple(i[:4].astype('int'))
             # frame = cv.rectangle(frame, bbox[:2], bbox[2:], thickness=2, lineType=cv.LINE_AA,
             #                      color=self.colors[i[-1]]
@@ -60,6 +59,7 @@ class yolox_engine_det:
             #                    fontFace=cv.FONT_HERSHEY_DUPLEX, fontScale=1, thickness=1, lineType=cv.LINE_AA,
             #                    color = (210, 105, 30)
             #                    )
+            frame = draw_boxes(frame, i[:4], i[4], i[5], self.labels, 0.7, self.colors)
         frame = cv.putText(frame, f'fps: {fps}', (10, 30), fontFace=cv.FONT_HERSHEY_SIMPLEX, fontScale=1, thickness=2,
                            lineType=cv.LINE_AA, color=(255, 0, 255))
         return frame
@@ -79,7 +79,7 @@ def main(args):
 
         if ret is True:
             frame = yolo_draw.draw(
-                frame, v8_head=args.yolov8_head, conf=args.conf_thres, iou=args.iou_thres, max_det=args.max_det
+                frame, conf=args.conf_thres, iou=args.iou_thres, max_det=args.max_det
             )
             cv.imshow('video', frame)
 
@@ -104,8 +104,6 @@ if __name__ == "__main__":
     # engine模型地址
     parser.add_argument('--engine_dir', type=str, default='./models_trt/yolox_s.engine',
                         help='engine path')
-    # 是否为yolov8的检测头
-    parser.add_argument('--yolov8_head', type=bool, default=False, choices=[True, False], help='yolov8_head or not')
     # 只有得分大于置信度的预测框会被保留下来
     parser.add_argument('--conf_thres', type=float, default=0.25, help='confidence threshold')
     # 非极大抑制所用到的nms_iou大小

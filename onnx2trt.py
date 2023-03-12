@@ -42,10 +42,11 @@ def build_engine(
         v8_head=False, add_nms=False, conf_thres=0.25, iou_thres=0.45, max_det=200, box_coding=1
 ):
     logger = trt.Logger(trt.Logger.ERROR)
+    trt.init_libnvinfer_plugins(logger, namespace="")
     builder = trt.Builder(logger)
     network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
     config = builder.create_builder_config()
-    config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 8 << 30)
+    config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 4 << 30)
 
     # Parse model file
     parser = trt.OnnxParser(network, logger)
@@ -155,7 +156,6 @@ class onnx2trt:
             self.logger = trt.Logger(trt.Logger.INFO)
             self.logger.min_severity = trt.Logger.Severity.VERBOSE
 
-        # self.logger = trt.Logger(trt.Logger.ERROR)
         trt.init_libnvinfer_plugins(self.logger, namespace="")
 
         self.builder = trt.Builder(self.logger)
@@ -319,7 +319,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description=__doc__)
     # onnx模型
-    parser.add_argument('--onnx_dir', type=str, default='./models_onnx/yolov8m.onnx', help='onnx path')
+    parser.add_argument('--onnx_dir', type=str, default='./models_onnx/yolov5s.onnx', help='onnx path')
     # engine模型保存地址
     parser.add_argument('--engine_dir', type=str, default=None, help='engine path')
     # 最小的输入shape
@@ -344,7 +344,7 @@ if __name__ == '__main__':
     # cache保存位置
     parser.add_argument('--cache_file', default=None, help='Int8 cache path')
     # 是否为yolov8的检测头
-    parser.add_argument('--yolov8_head', type=bool, default=True, choices=[True, False], help='yolov8_head or not')
+    parser.add_argument('--yolov8_head', type=bool, default=False, choices=[True, False], help='yolov8_head or not')
     # 是否添加nms
     parser.add_argument('--add_nms', type=bool, default=False, choices=[True, False], help='add efficientNMS')
     # 只有得分大于置信度的预测框会被保留下来

@@ -95,7 +95,7 @@ if __name__ == "__main__":
     parser.add_argument('--video_dir', type=str, default='sample_1080p_h265.mp4',
                         help='video path')
     # engine模型地址
-    parser.add_argument('--engine_dir', type=str, default='./models_trt/yolov5m.engine',
+    parser.add_argument('--engine_dir', type=str, default='./models_trt/yolov7_nms.engine',
                         help='engine path')
 
 
