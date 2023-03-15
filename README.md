@@ -16,10 +16,11 @@ yolox(不可在生成的engine中添加nms模块)
 ```bash
 |-yolov5_TensorRT_inference
     |-calibration       # 默认情况下用于存放int8量化校准集的文件夹
-    |-doc
+    |-cpp               # c++推理代码，有jetson nano上用的代码
+    |-doc               # 单纯用来存放文本的文件夹
     |-models_onnx       # 默认情况下用于存放onnx模型的文件夹
     |-models_trt        # 默认情况下用于存放量化后生成的trt模型的文件夹
-    |-utils
+    |-utils             # 存放utils的文件夹
     |-Benchmark.py      # 测试trt模型速度的脚本
     |-labels_coco.yaml  # coco数据集类别标签
     |-labels_voc.yaml   # voc数据集类别标签
