@@ -59,7 +59,7 @@ std::unordered_map<int, std::string> yaml_load_labels(const std::string& dir)
         {
             std::string::size_type pos = str.find(":");
             str1 = str.substr(0, pos + 1); // ：前的部分
-            str2 = str.substr(pos + 1);  // ：后的部分
+            str2 = str.substr(pos + 1, str.size() - pos - 2);  // ：后的部分
             catid_labels[std::stoi(str1)] = str2;
         }
         yaml_file.close();
@@ -109,7 +109,7 @@ void preprocess(cv::Mat& image, preproc_struct& image_trans, const cv::Size& res
 
     cv::Mat image_resize;
 
-    cv::resize(image, image_resize, cv::Size(w, h), 0, 0, 0);
+    cv::resize(image, image_resize, cv::Size(w, h), 0, 0, cv::INTER_NEAREST);
     cv::copyMakeBorder(image_resize, image_resize,
         h_p, (resize.height - h - h_p), w_p, (resize.width - w - w_p), cv::BORDER_CONSTANT, cv::Scalar::all(0));
 

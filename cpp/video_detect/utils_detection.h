@@ -13,7 +13,6 @@ struct color_dicts
     std::unordered_map<int, std::array<size_t, 3>> color_map;
     std::vector<int> catid;
 
-    color_dicts() {};
     color_dicts(const std::unordered_map<int, std::string>& catid_labels);
 };
 

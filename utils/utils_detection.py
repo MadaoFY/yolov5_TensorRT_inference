@@ -88,6 +88,7 @@ def letterbox_image(image, return_padding=False):
 def image_trans(img, size):
     scale = min((size[0] / img.shape[0]), (size[1] / img.shape[1]), 1.1)
     new_size = (int(img.shape[1] * scale), int(img.shape[0] * scale))
+    # img_new = cv.resize(img, new_size, interpolation=cv.INTER_NEAREST)
     img_new = cv.resize(img, new_size, interpolation=cv.INTER_LINEAR)
     top = round((size[0] - new_size[1]) * 0.5)
     bottom = (size[0] - new_size[1]) - top
