@@ -54,7 +54,7 @@ public:
     yolo_trt_det(const std::string& engine_dir, const std::string& labels_dir);
     virtual ~yolo_trt_det();
 
-    std::vector<cv::Mat> draw_batch(std::vector<cv::Mat>& image_list, const float& conf, const float& iou, const int& max_det);
+    std::vector<cv::Mat> draw_batch(std::vector<cv::Mat>& image_list, float conf, float iou, int max_det);
 
-    cv::Mat draw(cv::Mat& image, const float& conf, const float& iou, const int& max_det);
+    cv::Mat draw(cv::Mat& image, float conf, float iou, int max_det);
 };

@@ -73,7 +73,7 @@ std::unordered_map<int, std::string> yaml_load_labels(const std::string& dir)
 }
 
 
-void imgresize(const cv::Mat& image, cv::Mat& input_image, const float& scale, cv::Size resize)
+void imgresize(const cv::Mat& image, cv::Mat& input_image, float scale, cv::Size resize)
 {
     float i2d[6], d2i[6];
     //     resize图像，源图像和目标图像几何中心的对齐
@@ -91,7 +91,7 @@ void imgresize(const cv::Mat& image, cv::Mat& input_image, const float& scale, c
 }
 
 
-void preprocess(cv::Mat& image, preproc_struct& image_trans, const cv::Size& resize)
+void preprocess(cv::Mat& image, preproc_struct& image_trans, cv::Size resize)
 {
     int h, w, h_p, w_p;
 
@@ -150,7 +150,7 @@ void preprocess(cv::Mat& image, preproc_struct& image_trans, const cv::Size& res
 }
 
 
-void fliter_boxes(float* const boxes, bool v8_head, const std::array<int, 4>& output_shape, const float& conf_thres,
+void fliter_boxes(float* const boxes, bool v8_head, const std::array<int, 4>& output_shape, float conf_thres,
     std::vector<cv::Rect>& keep_boxes, std::vector<float>& keep_scores, std::vector<int>& keep_classes)
 {
     keep_boxes.reserve(150);
@@ -246,7 +246,7 @@ void scale_boxes(cv::Rect& box, const preproc_struct& preproc_res)
 }
 
 
-void draw_boxes(cv::Mat image, const cv::Rect& box, const float& score, const int& class_id,
+void draw_boxes(cv::Mat image, const cv::Rect& box, float score, int class_id,
     std::unordered_map<int, std::string> catid_labels, color_dicts& color_dicts)
 {
     cv::Size textsize;
@@ -276,7 +276,7 @@ static bool SortScorePairDescend(const std::pair<float, T>& pair1, const std::pa
 
 template <typename T>
 void max_score_idx(
-    const std::vector<float>& scores, const float& score_thres, T& scores_idxs)
+    const std::vector<float>& scores, float score_thres, T scores_idxs)
 {
     for (size_t i = 0; i < scores.size(); ++i)
     {
@@ -313,7 +313,7 @@ float get_iou(const cv::Rect& bbox1, const cv::Rect& bbox2)
 
 void base_nms(
     const std::vector<cv::Rect>& bboxes, const std::vector<float>& scores, const std::vector<int>& catid,
-    const float& score_threshold, const float& nms_threshold, std::vector<int>& indices, const int& limit)
+    float score_threshold, float nms_threshold, std::vector<int>& indices, int limit)
 {
     int x, y, max_coord = 0;
     for (int i = 0; i < bboxes.size(); i++)

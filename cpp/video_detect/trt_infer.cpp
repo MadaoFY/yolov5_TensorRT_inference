@@ -145,7 +145,7 @@ yolo_trt_det::yolo_trt_det(const std::string& engine_dir, const std::string& lab
 
 
 std::vector<cv::Mat> yolo_trt_det::draw_batch(std::vector<cv::Mat>& image_list, 
-    const float& conf_thres, const float& iou, const int& max_det)
+    float conf, float iou, int max_det)
 {
     // 数据预处理, resize,  bgrbgr2rrggbb
     int n = image_list.size();
@@ -213,7 +213,7 @@ std::vector<cv::Mat> yolo_trt_det::draw_batch(std::vector<cv::Mat>& image_list,
 }
 
 
-cv::Mat yolo_trt_det::draw(cv::Mat& image, const float& conf_thres, const float& iou, const int& max_det)
+cv::Mat yolo_trt_det::draw(cv::Mat& image, float conf, float iou, int max_det)
 {
     // 数据预处理, resize,  bgrbgr2rrggbb
     preproc_struct image_trans;
