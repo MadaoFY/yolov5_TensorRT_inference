@@ -2,8 +2,8 @@
 #include "gstreamer.h"
 #include "trt_infer.h"
 
-#include <opencv2/videoio.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/videoio.hpp>
 #include <iostream>
 
 
@@ -33,9 +33,11 @@ void run(const std::string& engine_dir,  const std::string& labels,  float conf_
     if (!cap.isOpened())
     {
         std::cout << "´ò¿ªÉãÏñÍ·Ê§°Ü." << std::endl;
+        return;
     }
 
-    yolo_trt_det yolo_detect(engine_dir, labels);
+    static cv::Size img_size = cv::Size(cap.get(cv::CAP_PROP_FRAME_WIDTH), cap.get(cv::CAP_PROP_FRAME_HEIGHT));
+    yolo_trt_det yolo_detect(engine_dir, labels, img_size);
     std::cout << "yolo_engine has been build" << "\n";
 
     bool keep(true);

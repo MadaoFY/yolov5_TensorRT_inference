@@ -1,13 +1,25 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(yolo_detect C CXX)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
+
+project(yolo_tensorrt C CXX)
 
 add_definitions(-DAPI_EXPORTS)
 option(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
-set(CMAKE_CXX_STANDARD 14)
-# set(CMAKE_BUILD_TYPE Debug)
-# set(CMAKE_BUILD_TYPE Release)
-set(src_list main.cpp  utils_detection.cpp  utils_detection.h trt_infer.cpp trt_infer.h)
+
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE Release CACHE STRING "Build Type" FORCE)
+	set(CMAKE_CXX_FLAGS_Release "$ENV{CXXFLAGS} -O3 -Wall")
+endif()
+
+
+set(src_list main.cpp  utils_detection.cpp  utils_detection.h trt_infer.cpp trt_infer.h preprocess.cu preprocess.h)
+
+# TODO(Call for PR): make cmake compatible with Windows
+set(CMAKE_CUDA_COMPILER  E:/NV/cuda11.7/bin/nvcc)
+enable_language(CUDA)
 
 # CUDA
 # TODO(Call for PR): make cmake compatible with Windows

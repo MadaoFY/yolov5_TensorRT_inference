@@ -16,8 +16,9 @@ void run(const std::string& engine_dir, const std::string& video_dir, const std:
         std::cout << "Failed to read video!" << "\n";
         return;
     }
-        
-    yolo_trt_det yolo_detect(engine_dir, labels);
+    
+    cv::Size img_size = cv::Size(vc.get(cv::CAP_PROP_FRAME_WIDTH), vc.get(cv::CAP_PROP_FRAME_HEIGHT));
+    yolo_trt_det yolo_detect(engine_dir, labels, img_size);
     std::cout << "yolo_engine has been build" << "\n";
     
     bool keep(true);
