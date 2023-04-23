@@ -116,7 +116,7 @@ float* do_inference(IExecutionContext*& context, std::vector<void*>& bufferH, co
 
 
 yolo_trt_det::yolo_trt_det(const std::string& engine_dir, const std::string& labels_dir, cv::Size img_size)
-    : infer_times(0), frams_num(0), img_size(img_size)
+    : img_size(img_size)
 {   
     // 载入类别标签, 生成颜色字典
     this->catid_labels = yaml_load_labels(labels_dir);
@@ -292,8 +292,4 @@ yolo_trt_det::~yolo_trt_det()
     _context->destroy();
     _engine->destroy();
     _runtime->destroy();
-
-    float infer_time_mean = (this->infer_times / this->frams_num) / 1000.f;
-    std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2);
-    std::cout << "infer_time_mean:" << infer_time_mean << "ms" << "\n";
 }

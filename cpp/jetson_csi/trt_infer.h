@@ -48,9 +48,6 @@ private:
     std::vector<int> BindingSize;
     cudaStream_t stream;
 
-    //uint64_t infer_times;
-    //uint32_t frams_num;
-
 public:
     yolo_trt_det(const std::string& engine_dir, const std::string& labels_dir, cv::Size img_size);
     ~yolo_trt_det();

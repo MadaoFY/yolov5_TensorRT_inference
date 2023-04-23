@@ -116,7 +116,7 @@ float* do_inference(IExecutionContext*& context, std::vector<void*>& bufferH, co
 
 
 yolo_trt_det::yolo_trt_det(const std::string& engine_dir, const std::string& labels_dir, cv::Size img_size)
-    : infer_times(0), frams_num(0), img_size(img_size)
+    : img_size(img_size)
 {   
      // 载入类别标签, 生成颜色字典
     this->catid_labels = yaml_load_labels(labels_dir);
@@ -145,7 +145,7 @@ yolo_trt_det::yolo_trt_det(const std::string& engine_dir, const std::string& lab
     this->gpu_buffer = std::vector<void*>(nBinding, nullptr);
     this->BindingSize = std::vector<int>(nBinding, 0);
 
-    allocate_buffers(_engine, this->cpu_buffer, this->gpu_buffer, this->BindingSize);
+    allocate_buffers(_engine, this->cpu_buffer, this->gpu_buffer, this->BindingSize, this->img_size);
 
     cudaStreamCreate(&this->stream);
 }
@@ -249,9 +249,6 @@ cv::Mat yolo_trt_det::draw(cv::Mat& image, float conf, float iou, int max_det)
     uint32_t fps = (1000000 / time);
     cv::String fps_text = cv::format("fps:%d", fps);
 
-    //this->infer_times += time;
-    //this->frams_num += 1;
-
     int top_k = cv::min((int)nms_idx.size(), max_det);
     std::vector<cv::Rect> nms_boxes;
     std::vector<float> nms_scores;
@@ -282,17 +279,14 @@ cv::Mat yolo_trt_det::draw(cv::Mat& image, float conf, float iou, int max_det)
 
 yolo_trt_det::~yolo_trt_det()
 {
-    cudaStreamDestroy(this->stream);
     for (int i = 0; i < this->cpu_buffer.size(); ++i)
     {
         cudaFreeHost(this->cpu_buffer[i]);
         cudaFree(this->gpu_buffer[i]);
     }
+    cudaStreamDestroy(this->stream);
+
     _context->destroy();
     _engine->destroy();
     _runtime->destroy();
-
-    //float infer_time_mean = (this->infer_times / this->frams_num) / 1000.f;
-    //std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(2);
-    //std::cout << "infer_time_mean:" << infer_time_mean << "ms" << "\n";
 }

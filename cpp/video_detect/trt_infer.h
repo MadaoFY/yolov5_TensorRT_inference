@@ -23,7 +23,7 @@ bool load_engine(nvinfer1::IRuntime*& runtime, nvinfer1::ICudaEngine*& engine, c
     nvinfer1::ILogger& gLogger);
 
 void allocate_buffers(nvinfer1::ICudaEngine*& engine, 
-    std::vector<void*>& bufferH, std::vector<void*>& bufferD, std::vector<int>& bindingsize, this->img_size);
+    std::vector<void*>& bufferH, std::vector<void*>& bufferD, std::vector<int>& bindingsize, cv::Size img_size);
 
 float* do_inference(nvinfer1::IExecutionContext*& context, std::vector<void*>& bufferH, const std::vector<void*>& bufferD,
     cudaStream_t& stream, const std::vector<int>& BindingSize);
@@ -46,9 +46,6 @@ private:
     std::vector<void*> gpu_buffer;
     std::vector<int> BindingSize;
     cudaStream_t stream;
-
-    /*uint64_t infer_times;
-    uint32_t frams_num;*/
 
 public:
     yolo_trt_det(const std::string& engine_dir, const std::string& labels_dir, cv::Size img_size);
