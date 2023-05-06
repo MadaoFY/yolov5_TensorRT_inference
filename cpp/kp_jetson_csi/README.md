@@ -1,6 +1,6 @@
 # kp_jetson_csi
 在jetson nano 4g上使用yolov5和hrnet进行摄像头人体关键点检测。  
-我对hrnet进行了轻量化改造，使其能在算力有限的平台上运行。替换上mobilenetv2的backbone后用coco2017数据集进行了训练，可满足单目标的人体关键点检测需求。  
+我对hrnet进行了轻量化改造，使其能在算力有限的平台上运行。替换上mobilenetv2的backbone后用coco2017数据集进行了训练，可满足单目标的人体关键点检测需求。
 后续有时间可能会更新关键点检测模型，当然如果没时间魔改出更快更准的模型的话就算了...
 
 ## 数据准备
@@ -18,8 +18,7 @@ points_link.yaml文件里记录的是关键点的链接信息，用于绘图。
 用cmake编译后，运行yolo_detect。
 
 ```shell
-yolo_detect --det_engine_dir=./yolov5s_person.engine --kp_engine_dir=./Myhrnet.engine \
-            --labels=./labels_det.yaml --pointlinker=./points_link.yaml
+yolo_detect --det_engine_dir=./yolov5s_person.engine --kp_engine_dir=./Myhrnet.engine --labels=./labels_det.yaml --pointlinker=./points_link.yaml
 ```  
 
 参数说明:
