@@ -1,5 +1,5 @@
 # jetson_csi
-用jetson nano摄像头目标检测的c++代码。
+用jetson nano摄像头目标检测的c++代码。  
 用cmake编译后，运行yolo_detect。
 
 ```shell
