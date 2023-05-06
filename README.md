@@ -1,12 +1,17 @@
 # yolov5_TensorRT_inference
-记录yolov5的TensorRT量化(fp16, int8)及推理代码。经实测可运行于Jetson平台，可将yolov5s、yolov8s这类的小模型部署在Jetson nano 4g上用于摄像头的检测。  
+记录yolov5的TensorRT量化(fp16, int8)及推理代码(python, cpp)。经实测可运行于Jetson平台，可将yolov5s、yolov8s这类的小模型部署在Jetson nano 4g上用于摄像头的检测。  
 <div align=center>
 <img src="https://github.com/MadaoFY/yolov5_TensorRT_inference/blob/main/doc/yolov5s_det.png">
 </div>
 
 
 重要内容更新：  
-2023.05.06  新增基于yolo、hrnet模型的人体关键点检测的c++推理代码。
+2023.05.06  新增基于yolo、hrnet模型的c++人体关键点检测代码。
+
+cpp：
+[视频目标检测](https://github.com/MadaoFY/yolov5_TensorRT_inference/tree/main/cpp/video_detect)
+[jetson nano摄像头目标检测](https://github.com/MadaoFY/yolov5_TensorRT_inference/tree/main/cpp/jetson_csi)
+[jetson nano摄像头人体关键点检测](https://github.com/MadaoFY/yolov5_TensorRT_inference/tree/main/cpp/kp_jetson_csi)
 
 模型支持：  
 yolov5  
