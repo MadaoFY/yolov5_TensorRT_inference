@@ -46,7 +46,8 @@ def build_engine(
     builder = trt.Builder(logger)
     network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
     config = builder.create_builder_config()
-    config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 4 << 30)
+    config.max_workspace_size = (4 << 30)
+    # config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 4 << 30)
 
     # Parse model file
     parser = trt.OnnxParser(network, logger)
@@ -114,6 +115,10 @@ def build_engine(
     if w != -1:
         min_shape[-1], opt_shape[-1], max_shape[-1] = w, w, w
 
+    profile = builder.create_optimization_profile()
+    profile.set_shape(inputTensor.name, min_shape, opt_shape, max_shape)
+    config.add_optimization_profile(profile)
+
     # Quantization
     if fp16:
         config.set_flag(trt.BuilderFlag.FP16)
@@ -129,9 +134,7 @@ def build_engine(
                 cacheFile=cache_file
             )
 
-    profile = builder.create_optimization_profile()
-    profile.set_shape(inputTensor.name, min_shape, opt_shape, max_shape)
-    config.add_optimization_profile(profile)
+
     print('Now, engine is building!')
     plan = builder.build_serialized_network(network, config)
     if plan is None:
@@ -160,7 +163,8 @@ class onnx2trt:
 
         self.builder = trt.Builder(self.logger)
         self.config = self.builder.create_builder_config()
-        self.config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 8 << 30)
+        self.config.max_workspace_size = (4 << 30)
+        # self.config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 4 << 30)
 
         self.network = None
         self.profile = None
@@ -248,6 +252,10 @@ class onnx2trt:
         if w != -1:
             min_shape[-1], opt_shape[-1], max_shape[-1] = w, w, w
 
+        self.profile = self.builder.create_optimization_profile()
+        self.profile.set_shape(inputTensor.name, min_shape, opt_shape, max_shape)
+        self.config.add_optimization_profile(self.profile)
+
         # Quantization
         if self.FP16:
             self.config.set_flag(trt.BuilderFlag.FP16)
@@ -263,10 +271,6 @@ class onnx2trt:
                 cacheFile=cache_file
             )
             self.config.int8_calibrator = calib
-
-        self.profile = self.builder.create_optimization_profile()
-        self.profile.set_shape(inputTensor.name, min_shape, opt_shape, max_shape)
-        self.config.add_optimization_profile(self.profile)
 
         print('Now, engine is building...')
         t1 = time.time()
@@ -332,10 +336,10 @@ if __name__ == '__main__':
     parser.add_argument('--max_shape', nargs='+', type=int, default=[1, 3, 512, 512],
                         help='input max shape [batch, channel, height, width]')
     # 是否使用fp16量化
-    parser.add_argument('--fp16', type=bool, default=False, choices=[True, False],
+    parser.add_argument('--fp16', type=bool, default=True, choices=[True, False],
                         help='TensorRt FP16 half-precision export')
     # 是否使用int8量化
-    parser.add_argument('--int8', type=bool, default=True, choices=[True, False],
+    parser.add_argument('--int8', type=bool, default=False, choices=[True, False],
                         help='TensorRt INT8 quantization')
     # int8量化校准集位置
     parser.add_argument('--imgs_dir', default='./calibration', help='Dataset for int8 calibration')
@@ -344,7 +348,7 @@ if __name__ == '__main__':
     # cache保存位置
     parser.add_argument('--cache_file', default=None, help='Int8 cache path')
     # 是否为yolov8的检测头
-    parser.add_argument('--yolov8_head', type=bool, default=False, choices=[True, False], help='yolov8_head or not')
+    parser.add_argument('--yolov8_head', type=bool, default=True, choices=[True, False], help='yolov8_head or not')
     # 是否添加nms
     parser.add_argument('--add_nms', type=bool, default=False, choices=[True, False], help='add efficientNMS')
     # 只有得分大于置信度的预测框会被保留下来
