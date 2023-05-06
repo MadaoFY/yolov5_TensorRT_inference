@@ -4,8 +4,8 @@
 <img src="https://github.com/MadaoFY/yolov5_TensorRT_inference/blob/main/doc/yolov5s_det.png">
 </div>
 
-
-重要内容更新：  
+  
+重要更新：  
 2023.05.06  新增基于yolo、hrnet模型的c++人体关键点检测代码。
 
 CPP：  
