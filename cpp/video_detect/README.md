@@ -1,5 +1,5 @@
 # video_detect
-用于视频目标检测的代码。  
+用于视频目标检测的c++代码。  
 用cmake编译后，运行yolo_detect。
 
 ```shell
