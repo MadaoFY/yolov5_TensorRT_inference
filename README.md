@@ -8,7 +8,7 @@
 重要内容更新：  
 2023.05.06  新增基于yolo、hrnet模型的c++人体关键点检测代码。
 
-cpp：  
+CPP：  
 [视频目标检测](https://github.com/MadaoFY/yolov5_TensorRT_inference/tree/main/cpp/video_detect)  
 [jetson nano摄像头目标检测](https://github.com/MadaoFY/yolov5_TensorRT_inference/tree/main/cpp/jetson_csi)  
 [jetson nano摄像头人体关键点检测](https://github.com/MadaoFY/yolov5_TensorRT_inference/tree/main/cpp/kp_jetson_csi)  
